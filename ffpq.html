@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FFPQ 性格診断テスト</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 2em; background: #f8f8ff; }
+    h1 { color: #333; }
+    .question { margin: 1em 0; padding: 1em; background: #fff; border-radius: 10px; box-shadow: 0 2px 4px #ccc; }
+    .question label { margin-right: 1em; }
+    .btn { margin-top: 2em; padding: 1em 2em; background: #4caf50; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    .result { margin-top: 2em; }
+    canvas { max-width: 300px; max-height: 300px; }
+  </style>
+</head>
+<body>
+  <h1>FFPQ 性格診断テスト</h1>
+  <form id="ffpqForm"></form>
+  <button class="btn" onclick="calculateResult()">診断する</button>
+  <div class="result">
+    <canvas id="resultChart"></canvas>
+    <div id="resultText"></div>
+  </div>
+
+  <script>
+    const questions = [{ text: "憂鬱になりやすい", key: "Em", reverse: false },
+      { text: "自分がみじめな人間に思える", key: "Em", reverse: false },
+      { text: "ものごとがうまく行かないのではないかと，よく心配する", key: "Em", reverse: false },
+      { text: "小さなことにはくよくよしない", key: "Em", reverse: true },
+      { text: "見捨てられた感じがする", key: "Em", reverse: false },
+      { text: "自分には全然価値がないように思えることがある", key: "Em", reverse: false },
+      { text: "陽気になったり陰気になったり，気分が変りやすい", key: "Em", reverse: false },
+      { text: "よく緊張する", key: "Em", reverse: false },
+      { text: "明るいときと暗いときの気分の差が大きい", key: "Em", reverse: false },
+      { text: "緊張してふるえるようなことはない", key: "Em", reverse: true },
+
+      { text: "大勢でわいわい騒ぐのが好きである", key: "Ex", reverse: false },
+      { text: "地味で目立つことはない", key: "Ex", reverse: true },
+      { text: "にぎやかな所が好きである", key: "Ex", reverse: false },
+      { text: "大勢の人の中にいるのが好きである", key: "Ex", reverse: false },
+      { text: "もの静かである", key: "Ex", reverse: true },
+      { text: "人の上に立つことが多い", key: "Ex", reverse: false },
+      { text: "人に指示を与えるような立場に立つことが多い", key: "Ex", reverse: false },
+      { text: "じっとしているのが嫌いである", key: "Ex", reverse: false },
+      { text: "人から注目されるとうれしい", key: "Ex", reverse: false },
+      { text: "スポーツ観戦で我を忘れて応援することがある", key: "Ex", reverse: false },
+
+      { text: "あまりきっちりした人間ではない", key: "C", reverse: true },
+      { text: "仕事を投げやりにしてしまうことがある", key: "C", reverse: true },
+      { text: "よく考えてから行動する", key: "C", reverse: false },
+      { text: "仕事は計画的にするようにしている", key: "C", reverse: false },
+      { text: "責任感が乏しいといわれることがある", key: "C", reverse: true },
+      { text: "まじめな努力家である", key: "C", reverse: false },
+      { text: "根気が続かないほうである", key: "C", reverse: true },
+      { text: "几帳面である", key: "C", reverse: false },
+      { text: "しんどいことはやりたくない", key: "C", reverse: true },
+      { text: "欲望のままに行動してしまうようなことは，ほとんどない", key: "C", reverse: false },
+
+      { text: "誰に対しても優しく親切にふるまうようにしている", key: "A", reverse: false },
+      { text: "人には暖かく友好的に接している", key: "A", reverse: false },
+      { text: "人の気持ちを積極的に理解しようとは思わない", key: "A", reverse: true },
+      { text: "あまり親切な人間ではない", key: "A", reverse: true },
+      { text: "人情深いほうだと思う", key: "A", reverse: false },
+      { text: "人のよろこびを自分のことのように喜べる", key: "A", reverse: false },
+      { text: "どうしても好きになれない人がたくさんいる", key: "A", reverse: true },
+      { text: "出会った人はたいがい好きになる", key: "A", reverse: false },
+      { text: "気配りをするほうである", key: "A", reverse: false },
+      { text: "人を馬鹿にしているといわれることがある", key: "A", reverse: true },
+
+      { text: "芸術作品に接すると鳥肌がたち興奮をおぼえることがある", key: "P", reverse: false },
+      { text: "美や芸術にはあまり関心がない", key: "P", reverse: true },
+      { text: "考えることは面白い", key: "P", reverse: false },
+      { text: "イメージがあふれ出てくる", key: "P", reverse: false },
+      { text: "自分の感じたことを大切にする", key: "P", reverse: false },
+      { text: "変わった人だとよくいわれる", key: "P", reverse: false },
+      { text: "空想の世界をさまようことはほとんどない", key: "P", reverse: true },
+      { text: "好奇心が強い", key: "P", reverse: false },
+      { text: "感情豊かな人間である", key: "P", reverse: false },
+      { text: "別世界に行ってみたい", key: "P", reverse: false }
+]; // 質問はここに配列で追加
+    const labelMap = {
+      "Em+Ex-": "陰鬱な悲観主義者","Em+Ex+": "超気分屋","Em-Ex-": "控えめ","Em-Ex+": "明るい楽天家",
+      "Em+P-": "不適応","Em+P+": "過敏症","Em-P-": "鈍感","Em-P+": "適応的",
+      "Em+A-": "短気","Em+A+": "臆病","Em-A-": "冷血","Em-A+": "おおらか",
+      "Em+C-": "アンダーコントロール","Em+C+": "オーバーコントロール","Em-C-": "リラックス","Em-C+": "監督",
+      "Ex+P-": "ミーハー","Ex+P+": "陽キャなクリエイティブ","Ex-P-": "引きこもり","Ex-P+": "内観者",
+      "Ex+A-": "リーダー","Ex+A+": "人好き","Ex-A-": "警戒屋","Ex-A+": "控えめ",
+      "Ex+C-": "遊び人","Ex+C+": "やり手","Ex-C-": "無気力","Ex-C+": "スローペース",
+      "P+A-": "自由思考","P+A+": "進歩派","P-A-": "信念派","P-A+": "伝統主義者",
+      "A+C-": "善意","A+C+": "効果的な利他主義者","A-C-": "無名","A-C+": "セルフプロモーター"
+    };
+
+    const form = document.getElementById("ffpqForm");
+   questions.forEach((q, i) => {
+  const div = document.createElement("div");
+  div.className = "question";
+  div.innerHTML = `<strong>Q${i + 1}</strong> ${q.text}<br>`;
+  for (let j = 1; j <= 5; j++) {
+    div.innerHTML += `<label><input type="radio" name="q${i}" value="${j}" required> ${j}</label>`;
+  }
+  form.appendChild(div);
+});
+function calculateResult() {
+  const scores = { Ex: 0, A: 0, C: 0, Em: 0, P: 0 };
+
+  questions.forEach((q, i) => {
+    const val = parseInt(document.querySelector(`input[name='q${i}']:checked`).value);
+    const score = q.reverse ? 6 - val : val;
+    scores[q.key] += score;
+  });
+
+  const avg = { Ex: 31, A: 32, C: 29, Em: 35, P: 35 };
+  const labels = ["外向性(Ex)", "協調性(A)", "誠実性(C)", "情動性(Em)", "開放性(P)"];
+  const data = [scores.Ex, scores.A, scores.C, scores.Em, scores.P];
+  const avgData = [avg.Ex, avg.A, avg.C, avg.Em, avg.P];
+
+  const diffText = data.map((v, i) => {
+    const trait = Object.keys(avg)[i];
+    const diff = v >= avg[trait] ? "＋" : "−";
+    return `${labels[i]}：${v}点（${diff}）`;
+  }).join("<br>");
+
+  const getPairLabel = (key1, s1, key2, s2) => {
+    const sign1 = s1 >= avg[key1] ? "+" : "-";
+    const sign2 = s2 >= avg[key2] ? "+" : "-";
+    return labelMap[`${key1}${sign1}${key2}${sign2}`];
+  };
+
+  const pairLabels = [
+    getPairLabel('Em', scores.Em, 'Ex', scores.Ex),
+    getPairLabel('Em', scores.Em, 'P', scores.P),
+    getPairLabel('Em', scores.Em, 'A', scores.A),
+    getPairLabel('Em', scores.Em, 'C', scores.C),
+    getPairLabel('Ex', scores.Ex, 'P', scores.P),
+    getPairLabel('Ex', scores.Ex, 'A', scores.A),
+    getPairLabel('Ex', scores.Ex, 'C', scores.C),
+    getPairLabel('P', scores.P, 'A', scores.A),
+    getPairLabel('A', scores.A, 'C', scores.C),
+  ];
+
+  const typeSummary = pairLabels.map(label => {
+    const entry = Object.entries(labelMap).find(([, v]) => v === label);
+    if (entry) {
+      const [code, name] = entry;
+      return `・<a href="result.html?type=${encodeURIComponent(code)}" target="_blank">${name}</a>`;
+    }
+    return `・${label}`;
+  }).join('<br>');
+
+  new Chart(document.getElementById("resultChart"), {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'あなたのスコア',
+          data: data,
+          fill: true,
+          borderColor: 'blue',
+          backgroundColor: 'rgba(173, 216, 230, 0.5)',
+          pointBackgroundColor: 'blue'
+        },
+        {
+          label: '日本人平均',
+          data: avgData,
+          fill: false,
+          borderColor: 'gray',
+          borderDash: [5, 5],
+          pointBackgroundColor: 'gray'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        r: {
+          min: 0,
+          max: 50,
+          ticks: { stepSize: 10 }
+        }
+      }
+    }
+  });
+
+  document.getElementById("resultText").innerHTML = `<h3>結果</h3><p>${diffText}</p><h4>あなたのタイプ傾向：</h4><p>${typeSummary}</p>`;
+}
+ // 質問生成・診断処理はここに追加
+  </script>
+</body>
+</html>

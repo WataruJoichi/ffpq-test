@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>診断結果 | FFPQ</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; background: #f4f4f9; }
+    .container { background: white; padding: 2em; border-radius: 10px; max-width: 700px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h1 { color: #333; }
+    p { line-height: 1.8; }
+    a { color: #007acc; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="type-name">診断タイプ</h1>
+    <p id="type-description">説明を読み込み中...</p>
+    <br>
+    <a href="ffpq.html">診断に戻る</a>
+  </div>
+
+  <script>
+    const descriptions = {
+      "Em+Ex-": "陰鬱な悲観主義者<br>人生が暗く感じられ、ストレスが多いと内面で苦悩しやすい。情動性への対処がカギ。",
+      "Em+Ex+": "超気分屋<br>感情の浮き沈みが激しく、対人関係が不安定。情動の安定が必要。",
+      "Em-Ex-": "控えめ<br>感情反応が乏しく、他人から冷たく見られがち。喜びを増やす行動が効果的。",
+      "Em-Ex+": "明るい楽天家<br>陽気でポジティブだが、楽観的すぎて先のリスクを見落としがち。",
+      "Em+P-": "不適応<br>ネガティブ感情の処理が苦手で、感情の言語化も困難。まずは内面の整理から。",
+      "Em+P+": "過敏症<br>感受性が強く、創造性も高いが、刺激に疲れやすい。情動安定が助けになる。",
+      "Em-P-": "鈍感<br>危機察知が苦手でリスクを軽視しがち。第三者の視点を取り入れると良い。",
+      "Em-P+": "適応的<br>ストレスを創造性や内省に活かせる。内面の強さと知的処理が特徴。",
+      "Em+A-": "短気<br>怒りを抑えるのが苦手で、衝動的に表現してしまいがち。共感力がカギ。",
+      "Em+A+": "臆病<br>怒りを内に抱え込みやすく、被害者意識を抱きやすい。アサーティブ練習が有効。",
+      "Em-A-": "冷血<br>怒りはあるが表に出さず、陰で復讐を考えるタイプ。共感力の強化が必須。",
+      "Em-A+": "おおらか<br>穏やかで許容力があり、他者から好かれやすい。調停役に向く。",
+      "Em+C-": "アンダーコントロール<br>衝動に弱く、我慢が苦痛。短期欲求に流されやすい。瞑想などが効果的。",
+      "Em+C+": "オーバーコントロール<br>完璧主義で自責感が強くなりやすい。セルフコンパッションが重要。",
+      "Em-C-": "リラックス<br>やる気が出にくく、怠けがち。モチベーション支援が必要。",
+      "Em-C+": "監督<br>高い自己制御と粘り強さがあり、困難でも耐えて頑張るタイプ。",
+      "Ex+P-": "ミーハー<br>流行や他人の評価に敏感。周囲との一体感を楽しむ。",
+      "Ex+P+": "陽キャなクリエイティブ<br>発見や表現が得意で、社交的なクリエイター。情報発信に強い。",
+      "Ex-P-": "引きこもり<br>内向的で保守的。単独で静かな活動に向く。外の刺激に慣れる訓練を。",
+      "Ex-P+": "内観者<br>内向的で創造性が高く、深い思考を持つ。他者のフィードバックを忘れずに。",
+      "Ex+A-": "リーダー<br>支配欲があり、自信も強い。温かさを意識すれば成功しやすい。",
+      "Ex+A+": "人好き<br>社交的で親切。他人を支えるのが得意だが、過剰な献身には注意。",
+      "Ex-A-": "警戒屋<br>他人を警戒しがちで距離を取る。事前準備が安心感を生む。",
+      "Ex-A+": "控えめ<br>内気で情に厚く、誠実。信頼しすぎに注意しつつ、自分のペースで交流を。",
+      "Ex+C-": "遊び人<br>衝動的でスリルを好む。計画性をつければ活躍の場が広がる。",
+      "Ex+C+": "やり手<br>実行力と効率性に優れ、積極的。強引に見えないよう注意。",
+      "Ex-C-": "無気力<br>やる気が乏しく、受動的。まずは小さな行動から。",
+      "Ex-C+": "スローペース<br>堅実で粘り強いが、ペースが遅め。着実に成果を出せるタイプ。",
+      "P+A-": "自由思考<br>合理的で批判的。冷たく見られやすいため、温かみの演出が大切。",
+      "P+A+": "進歩派<br>理想を追い、社会を良くしようとする。伝える力を磨くとより活躍。",
+      "P-A-": "信念派<br>強い道徳観と厳格さが特徴。柔軟性を持たないと孤立しやすい。",
+      "P-A+": "伝統主義者<br>慣習や秩序を重視する安定志向。新しい価値観への開放が課題。",
+      "A+C-": "善意<br>親切だが継続力が弱い。周囲と協力して力を引き出すと良い。",
+      "A+C+": "効果的な利他主義者<br>真面目で献身的。やりすぎに注意しつつチームに貢献できる。",
+      "A-C-": "無名<br>自分中心で欲求に弱く、悪習に陥りがち。自己管理が課題。",
+      "A-C+": "セルフプロモーター<br>自己中心的だが成果は出せる。共感力を養えばさらに成功しやすい。"
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const type = params.get("type");
+    const result = descriptions[type];
+
+    if (result) {
+      document.getElementById("type-name").textContent = result.split("<br>")[0];
+      document.getElementById("type-description").innerHTML = result.split("<br>")[1];
+    } else {
+      document.getElementById("type-name").textContent = "不明なタイプ";
+      document.getElementById("type-description").textContent = "タイプ情報が見つかりませんでした。URLを確認してください。";
+    }
+  </script>
+</body>
+</html>
