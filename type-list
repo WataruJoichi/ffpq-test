@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>FFPQ 32タイプ一覧</title>
+  <style>
+    body { font-family: sans-serif; background: #f0f0f8; padding: 2em; }
+    h1 { text-align: center; }
+    .type-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5em;
+      margin-top: 2em;
+    }
+    .type-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1em;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .type-card img {
+      width: 150px;
+      height: 150px;
+      object-fit: contain;
+    }
+    .type-title {
+      font-weight: bold;
+      font-size: 1.2em;
+      margin-top: 0.5em;
+    }
+    .type-code {
+      color: #888;
+      font-size: 0.9em;
+    }
+    .type-desc {
+      margin-top: 0.5em;
+    }
+  </style>
+</head>
+<body>
+  <h1>FFPQ 32タイプ一覧</h1>
+  <div class="type-grid" id="typeList"></div>
+
+  <script>
+    const types = [
+      { code: "Em+Ex-", name: "陰鬱な悲観主義者", desc: "気分が落ち込みやすく、社交的でない。内面の不安と向き合う力が求められる。" },
+      { code: "Em+Ex+", name: "超気分屋", desc: "感情の波が激しく、外向的。周囲の影響を受けやすいが、人間味あふれる存在。" },
+      { code: "Em-Ex-", name: "控えめ", desc: "落ち着いていて控えめ。冷静に物事を判断するが、自己主張は少なめ。" },
+      { code: "Em-Ex+", name: "明るい楽天家", desc: "前向きで活発。感情の波が少なく、場の空気を明るくする存在。" },
+
+      { code: "Em+P-", name: "不適応", desc: "不安を感じやすく、新しいことには消極的。安心できる環境で力を発揮する。" },
+      { code: "Em+P+", name: "過敏症", desc: "感受性が鋭く、心が繊細。刺激に弱く、内面の葛藤を抱えやすい。" },
+      { code: "Em-P-", name: "鈍感", desc: "刺激に対して鈍感で、安定志向。感情的には安定しているが創造性は控えめ。" },
+      { code: "Em-P+", name: "適応的", desc: "穏やかで創造性もある。安定しつつも柔軟で、日常生活を楽しめるタイプ。" },
+
+      { code: "Em+A-", name: "短気", desc: "怒りっぽく他人に厳しいが、正義感が強い。ストレートな表現をしがち。" },
+      { code: "Em+A+", name: "臆病", desc: "傷つくのを恐れ、人に気を使いすぎる。内向的な優しさの持ち主。" },
+      { code: "Em-A-", name: "冷血", desc: "合理的でドライ。他人の感情に流されにくいが、共感性には欠ける傾向。" },
+      { code: "Em-A+", name: "おおらか", desc: "落ち着いていて人に優しい。争いごとを避け、協調性を大切にする。" },
+
+      { code: "Em+C-", name: "アンダーコントロール", desc: "感情をコントロールするのが苦手で、衝動的な言動が目立つ傾向。" },
+      { code: "Em+C+", name: "オーバーコントロール", desc: "真面目すぎるがゆえに、自分を責めやすい。完璧主義的傾向あり。" },
+      { code: "Em-C-", name: "リラックス", desc: "細かいことは気にせずのびのび過ごす。マイペースで柔軟。" },
+      { code: "Em-C+", name: "監督", desc: "冷静沈着で責任感が強い。他人に対しても厳しく指導的な立場をとりやすい。" },
+
+      { code: "Ex+P-", name: "ミーハー", desc: "刺激に敏感で流行に流されやすい。場を盛り上げるのが得意なムードメーカー。" },
+      { code: "Ex+P+", name: "陽キャなクリエイティブ", desc: "社交的で創造的。アイデアを次々出し、人と一緒に何かを生み出すのが得意。" },
+      { code: "Ex-P-", name: "引きこもり", desc: "内向的で新しいことにも関心が薄い。静かな環境を好む。" },
+      { code: "Ex-P+", name: "内観者", desc: "独自の世界観を持ち、自己探求が好き。静かな創造性の持ち主。" },
+
+      { code: "Ex+A-", name: "リーダー", desc: "強引だが人を引っ張る力あり。成果にこだわる実行派。" },
+      { code: "Ex+A+", name: "人好き", desc: "人と一緒にいるのが大好きで、自然と輪の中心になるタイプ。" },
+      { code: "Ex-A-", name: "警戒屋", desc: "外では元気だが、人間関係では壁を作りがち。慎重派。" },
+      { code: "Ex-A+", name: "控えめ", desc: "朗らかだが出しゃばらない。調和を大切にし、人間関係が円滑。" },
+
+      { code: "Ex+C-", name: "遊び人", desc: "楽しいこと優先で、計画は苦手。場当たり的な行動が目立つ。" },
+      { code: "Ex+C+", name: "やり手", desc: "社交的でタスクもこなせる。周囲から信頼されやすいタイプ。" },
+      { code: "Ex-C-", name: "無気力", desc: "静かで計画性も低く、やる気を出すまで時間がかかる。" },
+      { code: "Ex-C+", name: "スローペース", desc: "マイペースに着実に取り組む。スピードより確実性を重視。" },
+
+      { code: "P+A-", name: "自由思考", desc: "他人の意見に縛られず、自分の世界を大事にする。個性的な自由人。" },
+      { code: "P+A+", name: "進歩派", desc: "想像力があり、優しさもある。未来志向で、人の役に立つアイデアを形にできる。" },
+      { code: "P-A-", name: "信念派", desc: "一匹狼気質で、信念を貫く。少数派でも自分の考えを大切にする。" },
+      { code: "P-A+", name: "伝統主義者", desc: "人との調和を重んじ、安心できる慣習や価値観を好む保守的タイプ。" },
+
+      { code: "A+C-", name: "善意", desc: "優しいがややルーズ。善意で動くが、計画性に欠けることも。" },
+      { code: "A+C+", name: "効果的な利他主義者", desc: "親切で信頼され、組織でも頼られる存在。人のために動ける実力者。" },
+      { code: "A-C-", name: "無名", desc: "優しさも責任感も控えめで、目立ちにくい。穏やかに暮らしたい人。" },
+      { code: "A-C+", name: "セルフプロモーター", desc: "表向きは協調的だが、しっかり自分の利益も守るバランス型。" }
+    ];
+
+    const container = document.getElementById("typeList");
+    types.forEach(type => {
+      const card = document.createElement("div");
+      card.className = "type-card";
+      card.innerHTML = `
+        <img src="image/${type.code}.png" alt="${type.name}">
+        <div class="type-title">${type.name}</div>
+        <div class="type-code">${type.code}</div>
+        <div class="type-desc">${type.desc}</div>
+      `;
+      container.appendChild(card);
+    });
+  </script>
+</body>
+</html>
+
+
