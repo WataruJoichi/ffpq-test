@@ -71,7 +71,7 @@
     const typeCode = params.get("type");
     const typeName = labelMap[typeCode] || "不明なタイプ";
     const description = descriptionMap[typeCode] || "説明文が見つかりません。";
-    const imagePath = `images/${encodeURIComponent(typeCode)}.png`;
+    const imagePath = `image/${encodeURIComponent(typeCode)}.png`;
 
     const resultDiv = document.getElementById("result");
     resultDiv.innerHTML = `
