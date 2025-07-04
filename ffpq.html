@@ -6,38 +6,120 @@
   <title>FFPQ 性格診断テスト</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: sans-serif; margin: 2em; background: #f8f8ff; }
-    h1 { color: #333; }
-    .question { margin: 1em 0; padding: 1em; background: #fff; border-radius: 10px; box-shadow: 0 2px 4px #ccc; }
-    .question label { margin-right: 1em; font-size: 1.1em; }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding-top: 70px;
+      background: #f8f8ff;
+    }
+    h1 { color: #333; margin: 1em; }
+    .question {
+      margin: 1em;
+      padding: 1em;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px #ccc;
+    }
+    .question label {
+      margin-right: 1em;
+      font-size: 1.1em;
+    }
     .question input[type="radio"] {
       transform: scale(1.5);
       margin-right: 0.3em;
     }
-    .btn { margin-top: 2em; padding: 1em 2em; background: #4caf50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em; }
-    .result { margin-top: 2em; }
-    canvas { max-width: 300px; max-height: 300px; }
-    .scale-info { margin: 1em 0; padding: 1em; background: #e0f7fa; border-radius: 10px; }
+    .btn {
+      margin: 1em;
+      padding: 1em 2em;
+      background: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1.1em;
+    }
+    .result {
+      margin: 2em;
+    }
+    canvas {
+      max-width: 300px;
+      max-height: 300px;
+    }
+    .scale-info {
+      margin: 1em;
+      padding: 1em;
+      background: #e0f7fa;
+      border-radius: 10px;
+    }
+    #progressWrapper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: #fff;
+      z-index: 1000;
+      padding: 0.5em 1em;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    #progressBarContainer {
+      height: 10px;
+      flex-grow: 1;
+      margin-left: 1em;
+      background: #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    #progressBar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ff6ec4, #7873f5, #4cd964);
+      background-size: 200% 100%;
+      animation: gradientMove 2s linear infinite;
+      transition: width 0.5s ease;
+    }
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+    @keyframes flash {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
   </style>
 </head>
 <body>
+  <div id="progressWrapper">
+    <div id="progressText">0%</div>
+    <div id="progressBarContainer">
+      <div id="progressBar"></div>
+    </div>
+  </div>
+
   <h1>FFPQ 性格診断テスト</h1>
   <div class="scale-info">
     <strong>以下の5段階で答えてください：</strong><br>
     1：全くちがう　2：ちがう　3：どちらともいえない　4：そうだ　5：全くそうだ
   </div>
+
   <form id="ffpqForm"></form>
   <button class="btn" onclick="calculateResult()">診断する</button>
   <button class="btn" onclick="saveAnswers()">保存</button>
   <button class="btn" onclick="loadAnswers()">復元</button>
+
   <div class="result">
     <canvas id="resultChart"></canvas>
     <div id="resultText"></div>
   </div>
-  <a class="top-link" href="type-list.html" target="_blank">▶ タイプ一覧を見る</a>
+  <a class="top-link" href="type-list.html" target="_blank">▶ 32タイプの一覧を見る</a>
 
-<script>
-  const questions = [{ text: "憂鬱になりやすい", key: "Em", reverse: false },
+  <script>
+    // 質問・ラベル省略（ここに質問配列・labelMap・平均値などの元データを入れてください）
+    // ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+    const questions = [{ text: "憂鬱になりやすい", key: "Em", reverse: false },
       { text: "自分がみじめな人間に思える", key: "Em", reverse: false },
       { text: "ものごとがうまく行かないのではないかと，よく心配する", key: "Em", reverse: false },
       { text: "小さなことにはくよくよしない", key: "Em", reverse: true },
@@ -91,9 +173,8 @@
       { text: "好奇心が強い", key: "P", reverse: false },
       { text: "感情豊かな人間である", key: "P", reverse: false },
       { text: "別世界に行ってみたい", key: "P", reverse: false }
-]; // 省略：設問はここに入れる
-
-  const labelMap = {
+]; // ← ここに設問100個
+    const labelMap = {
     "Em+Ex-": "陰鬱な悲観主義者","Em+Ex+": "超気分屋","Em-Ex-": "控えめ","Em-Ex+": "明るい楽天家",
     "Em+P-": "不適応","Em+P+": "過敏症","Em-P-": "鈍感","Em-P+": "適応的",
     "Em+A-": "短気","Em+A+": "臆病","Em-A-": "冷血","Em-A+": "おおらか",
@@ -103,44 +184,73 @@
     "Ex+C-": "遊び人","Ex+C+": "やり手","Ex-C-": "無気力","Ex-C+": "スローペース",
     "P+A-": "自由思考","P+A+": "進歩派","P-A-": "信念派","P-A+": "伝統主義者",
     "A+C-": "善意","A+C+": "効果的な利他主義者","A-C-": "無名","A-C+": "セルフプロモーター"
-  };
+};  // ← 32タイプのマッピング
+    const avg = { Ex: 31, A: 32, C: 29, Em: 35, P: 35 };
+    // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
-  const form = document.getElementById("ffpqForm");
-  questions.forEach((q, i) => {
-    const div = document.createElement("div");
-    div.className = "question";
-    div.innerHTML = `<strong>Q${i + 1}</strong> ${q.text}<br>`;
-    for (let j = 1; j <= 5; j++) {
-      div.innerHTML += `<label><input type="radio" name="q${i}" value="${j}" required> ${j}</label>`;
-    }
-    form.appendChild(div);
-  });
+    const form = document.getElementById("ffpqForm");
 
-  function saveAnswers() {
-    const answers = {};
-    for (let i = 0; i < questions.length; i++) {
-      const selected = document.querySelector(`input[name='q${i}']:checked`);
-      if (selected) answers[`q${i}`] = selected.value;
-    }
-    localStorage.setItem('ffpq_saved', JSON.stringify(answers));
-    alert('回答を保存しました！');
-  }
+    function updateProgressBar() {
+      const total = questions.length;
+      let answered = 0;
+      questions.forEach((_, i) => {
+        if (document.querySelector(`input[name='q${i}']:checked`)) {
+          answered++;
+        }
+      });
+      const percent = (answered / total) * 100;
+      const progressBar = document.getElementById("progressBar");
+      const progressText = document.getElementById("progressText");
 
-  function loadAnswers() {
-    const saved = localStorage.getItem('ffpq_saved');
-    if (!saved) {
-      alert('保存された回答が見つかりません');
-      return;
-    }
-    const answers = JSON.parse(saved);
-    for (const [key, value] of Object.entries(answers)) {
-      const input = document.querySelector(`input[name='${key}'][value='${value}']`);
-      if (input) input.checked = true;
-    }
-    alert('回答を復元しました！');
-  }
+      progressBar.style.width = `${percent}%`;
+      progressText.textContent = `${Math.round(percent)}%`;
 
-  function calculateResult() {
+      if (percent === 100) {
+        progressBar.style.animation = "flash 1s ease 2";
+      } else {
+        progressBar.style.animation = "gradientMove 2s linear infinite";
+      }
+    }
+
+    questions.forEach((q, i) => {
+      const div = document.createElement("div");
+      div.className = "question";
+      div.innerHTML = `<strong>Q${i + 1}</strong> ${q.text}<br>`;
+      for (let j = 1; j <= 5; j++) {
+        div.innerHTML += `
+          <label>
+            <input type="radio" name="q${i}" value="${j}" required onchange="updateProgressBar()"> ${j}
+          </label>`;
+      }
+      form.appendChild(div);
+    });
+
+    function saveAnswers() {
+      const answers = {};
+      for (let i = 0; i < questions.length; i++) {
+        const selected = document.querySelector(`input[name='q${i}']:checked`);
+        if (selected) answers[`q${i}`] = selected.value;
+      }
+      localStorage.setItem('ffpq_saved', JSON.stringify(answers));
+      alert('回答を保存しました！');
+    }
+
+    function loadAnswers() {
+      const saved = localStorage.getItem('ffpq_saved');
+      if (!saved) {
+        alert('保存された回答が見つかりません');
+        return;
+      }
+      const answers = JSON.parse(saved);
+      for (const [key, value] of Object.entries(answers)) {
+        const input = document.querySelector(`input[name='${key}'][value='${value}']`);
+        if (input) input.checked = true;
+      }
+      updateProgressBar();
+      alert('回答を復元しました！');
+    }
+
+    function calculateResult() {
     const scores = { Ex: 0, A: 0, C: 0, Em: 0, P: 0 };
     questions.forEach((q, i) => {
       const val = parseInt(document.querySelector(`input[name='q${i}']:checked`).value);
@@ -226,3 +336,4 @@
 </script>
 </body>
 </html>
+
