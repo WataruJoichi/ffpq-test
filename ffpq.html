@@ -28,13 +28,16 @@
   </div>
   <form id="ffpqForm"></form>
   <button class="btn" onclick="calculateResult()">診断する</button>
+  <button class="btn" onclick="saveAnswers()">保存</button>
+  <button class="btn" onclick="loadAnswers()">復元</button>
   <div class="result">
     <canvas id="resultChart"></canvas>
     <div id="resultText"></div>
   </div>
+  <a class="top-link" href="type-list.html" target="_blank">▶ 32タイプの一覧を見る</a>
 
-  <script>
-    const questions = [{ text: "憂鬱になりやすい", key: "Em", reverse: false },
+<script>
+  const questions = [{ text: "憂鬱になりやすい", key: "Em", reverse: false },
       { text: "自分がみじめな人間に思える", key: "Em", reverse: false },
       { text: "ものごとがうまく行かないのではないかと，よく心配する", key: "Em", reverse: false },
       { text: "小さなことにはくよくよしない", key: "Em", reverse: true },
@@ -88,114 +91,138 @@
       { text: "好奇心が強い", key: "P", reverse: false },
       { text: "感情豊かな人間である", key: "P", reverse: false },
       { text: "別世界に行ってみたい", key: "P", reverse: false }
-]; // 質問はここに配列で追加
-    const labelMap = {
-      "Em+Ex-": "陰鬱な悲観主義者","Em+Ex+": "超気分屋","Em-Ex-": "控えめ","Em-Ex+": "明るい楽天家",
-      "Em+P-": "不適応","Em+P+": "過敏症","Em-P-": "鈍感","Em-P+": "適応的",
-      "Em+A-": "短気","Em+A+": "臆病","Em-A-": "冷血","Em-A+": "おおらか",
-      "Em+C-": "アンダーコントロール","Em+C+": "オーバーコントロール","Em-C-": "リラックス","Em-C+": "監督",
-      "Ex+P-": "ミーハー","Ex+P+": "陽キャなクリエイティブ","Ex-P-": "引きこもり","Ex-P+": "内観者",
-      "Ex+A-": "リーダー","Ex+A+": "人好き","Ex-A-": "警戒屋","Ex-A+": "控えめ",
-      "Ex+C-": "遊び人","Ex+C+": "やり手","Ex-C-": "無気力","Ex-C+": "スローペース",
-      "P+A-": "自由思考","P+A+": "進歩派","P-A-": "信念派","P-A+": "伝統主義者",
-      "A+C-": "善意","A+C+": "効果的な利他主義者","A-C-": "無名","A-C+": "セルフプロモーター"
-    };
+]; // 省略：設問はここに入れる
 
-    const form = document.getElementById("ffpqForm");
-   questions.forEach((q, i) => {
-  const div = document.createElement("div");
-  div.className = "question";
-  div.innerHTML = `<strong>Q${i + 1}</strong> ${q.text}<br>`;
-  for (let j = 1; j <= 5; j++) {
-    div.innerHTML += `<label><input type="radio" name="q${i}" value="${j}" required> ${j}</label>`;
-  }
-  form.appendChild(div);
-});
-function calculateResult() {
-  const scores = { Ex: 0, A: 0, C: 0, Em: 0, P: 0 };
-
-  questions.forEach((q, i) => {
-    const val = parseInt(document.querySelector(`input[name='q${i}']:checked`).value);
-    const score = q.reverse ? 6 - val : val;
-    scores[q.key] += score;
-  });
-
-  const avg = { Ex: 31, A: 32, C: 29, Em: 35, P: 35 };
-  const labels = ["外向性(Ex)", "協調性(A)", "誠実性(C)", "情動性(Em)", "開放性(P)"];
-  const data = [scores.Ex, scores.A, scores.C, scores.Em, scores.P];
-  const avgData = [avg.Ex, avg.A, avg.C, avg.Em, avg.P];
-
-  const diffText = data.map((v, i) => {
-    const trait = Object.keys(avg)[i];
-    const diff = v >= avg[trait] ? "＋" : "−";
-    return `${labels[i]}：${v}点（${diff}）`;
-  }).join("<br>");
-
-  const getPairLabel = (key1, s1, key2, s2) => {
-    const sign1 = s1 >= avg[key1] ? "+" : "-";
-    const sign2 = s2 >= avg[key2] ? "+" : "-";
-    return labelMap[`${key1}${sign1}${key2}${sign2}`];
+  const labelMap = {
+    "Em+Ex-": "陰鬱な悲観主義者","Em+Ex+": "超気分屋","Em-Ex-": "控えめ","Em-Ex+": "明るい楽天家",
+    "Em+P-": "不適応","Em+P+": "過敏症","Em-P-": "鈍感","Em-P+": "適応的",
+    "Em+A-": "短気","Em+A+": "臆病","Em-A-": "冷血","Em-A+": "おおらか",
+    "Em+C-": "アンダーコントロール","Em+C+": "オーバーコントロール","Em-C-": "リラックス","Em-C+": "監督",
+    "Ex+P-": "ミーハー","Ex+P+": "陽キャなクリエイティブ","Ex-P-": "引きこもり","Ex-P+": "内観者",
+    "Ex+A-": "リーダー","Ex+A+": "人好き","Ex-A-": "警戒屋","Ex-A+": "控えめ",
+    "Ex+C-": "遊び人","Ex+C+": "やり手","Ex-C-": "無気力","Ex-C+": "スローペース",
+    "P+A-": "自由思考","P+A+": "進歩派","P-A-": "信念派","P-A+": "伝統主義者",
+    "A+C-": "善意","A+C+": "効果的な利他主義者","A-C-": "無名","A-C+": "セルフプロモーター"
   };
 
-  const pairLabels = [
-    getPairLabel('Em', scores.Em, 'Ex', scores.Ex),
-    getPairLabel('Em', scores.Em, 'P', scores.P),
-    getPairLabel('Em', scores.Em, 'A', scores.A),
-    getPairLabel('Em', scores.Em, 'C', scores.C),
-    getPairLabel('Ex', scores.Ex, 'P', scores.P),
-    getPairLabel('Ex', scores.Ex, 'A', scores.A),
-    getPairLabel('Ex', scores.Ex, 'C', scores.C),
-    getPairLabel('P', scores.P, 'A', scores.A),
-    getPairLabel('A', scores.A, 'C', scores.C),
-  ];
-
-  const typeSummary = pairLabels.map(label => {
-    const entry = Object.entries(labelMap).find(([, v]) => v === label);
-    if (entry) {
-      const [code, name] = entry;
-      return `・<a href="result.html?type=${encodeURIComponent(code)}" target="_blank">${name}</a>`;
+  const form = document.getElementById("ffpqForm");
+  questions.forEach((q, i) => {
+    const div = document.createElement("div");
+    div.className = "question";
+    div.innerHTML = `<strong>Q${i + 1}</strong> ${q.text}<br>`;
+    for (let j = 1; j <= 5; j++) {
+      div.innerHTML += `<label><input type="radio" name="q${i}" value="${j}" required> ${j}</label>`;
     }
-    return `・${label}`;
-  }).join('<br>');
-
-  new Chart(document.getElementById("resultChart"), {
-    type: 'radar',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'あなたのスコア',
-          data: data,
-          fill: true,
-          borderColor: 'blue',
-          backgroundColor: 'rgba(173, 216, 230, 0.5)',
-          pointBackgroundColor: 'blue'
-        },
-        {
-          label: '日本人平均',
-          data: avgData,
-          fill: false,
-          borderColor: 'gray',
-          borderDash: [5, 5],
-          pointBackgroundColor: 'gray'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        r: {
-          min: 0,
-          max: 50,
-          ticks: { stepSize: 10 }
-        }
-      }
-    }
+    form.appendChild(div);
   });
 
-  document.getElementById("resultText").innerHTML = `<h3>結果</h3><p>${diffText}</p><h4>あなたのタイプ傾向：</h4><p>${typeSummary}</p>`;
-}
- // 質問生成・診断処理はここに追加
-  </script>
+  function saveAnswers() {
+    const answers = {};
+    for (let i = 0; i < questions.length; i++) {
+      const selected = document.querySelector(`input[name='q${i}']:checked`);
+      if (selected) answers[`q${i}`] = selected.value;
+    }
+    localStorage.setItem('ffpq_saved', JSON.stringify(answers));
+    alert('回答を保存しました！');
+  }
+
+  function loadAnswers() {
+    const saved = localStorage.getItem('ffpq_saved');
+    if (!saved) {
+      alert('保存された回答が見つかりません');
+      return;
+    }
+    const answers = JSON.parse(saved);
+    for (const [key, value] of Object.entries(answers)) {
+      const input = document.querySelector(`input[name='${key}'][value='${value}']`);
+      if (input) input.checked = true;
+    }
+    alert('回答を復元しました！');
+  }
+
+  function calculateResult() {
+    const scores = { Ex: 0, A: 0, C: 0, Em: 0, P: 0 };
+    questions.forEach((q, i) => {
+      const val = parseInt(document.querySelector(`input[name='q${i}']:checked`).value);
+      const score = q.reverse ? 6 - val : val;
+      scores[q.key] += score;
+    });
+
+    const avg = { Ex: 31, A: 32, C: 29, Em: 35, P: 35 };
+    const labels = ["外向性(Ex)", "協調性(A)", "誠実性(C)", "情動性(Em)", "開放性(P)"];
+    const data = [scores.Ex, scores.A, scores.C, scores.Em, scores.P];
+    const avgData = [avg.Ex, avg.A, avg.C, avg.Em, avg.P];
+
+    const diffText = data.map((v, i) => {
+      const trait = Object.keys(avg)[i];
+      const diff = v >= avg[trait] ? "＋" : "−";
+      return `${labels[i]}：${v}点（${diff}）`;
+    }).join("<br>");
+
+    const getPairLabel = (key1, s1, key2, s2) => {
+      const sign1 = s1 >= avg[key1] ? "+" : "-";
+      const sign2 = s2 >= avg[key2] ? "+" : "-";
+      return labelMap[`${key1}${sign1}${key2}${sign2}`];
+    };
+
+    const pairLabels = [
+      getPairLabel('Em', scores.Em, 'Ex', scores.Ex),
+      getPairLabel('Em', scores.Em, 'P', scores.P),
+      getPairLabel('Em', scores.Em, 'A', scores.A),
+      getPairLabel('Em', scores.Em, 'C', scores.C),
+      getPairLabel('Ex', scores.Ex, 'P', scores.P),
+      getPairLabel('Ex', scores.Ex, 'A', scores.A),
+      getPairLabel('Ex', scores.Ex, 'C', scores.C),
+      getPairLabel('P', scores.P, 'A', scores.A),
+      getPairLabel('A', scores.A, 'C', scores.C)
+    ];
+
+    const typeSummary = pairLabels.map(label => {
+      const entry = Object.entries(labelMap).find(([, v]) => v === label);
+      if (entry) {
+        const [code, name] = entry;
+        return `・<a href="result.html?type=${encodeURIComponent(code)}" target="_blank">${name}</a>`;
+      }
+      return `・${label}`;
+    }).join('<br>');
+
+    new Chart(document.getElementById("resultChart"), {
+      type: 'radar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'あなたのスコア',
+            data: data,
+            fill: true,
+            borderColor: 'blue',
+            backgroundColor: 'rgba(173, 216, 230, 0.5)',
+            pointBackgroundColor: 'blue'
+          },
+          {
+            label: '日本人平均',
+            data: avgData,
+            fill: false,
+            borderColor: 'gray',
+            borderDash: [5, 5],
+            pointBackgroundColor: 'gray'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          r: {
+            min: 0,
+            max: 50,
+            ticks: { stepSize: 10 }
+          }
+        }
+      }
+    });
+
+    document.getElementById("resultText").innerHTML = `<h3>結果</h3><p>${diffText}</p><h4>あなたのタイプ傾向：</h4><p>${typeSummary}</p>`;
+  }
+</script>
 </body>
 </html>
